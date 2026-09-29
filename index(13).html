@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>스마트폰 역량 평가서</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Pretendard', 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
+    }
+
+    /* 스마트폰 전체 화면 높이(dvh)에 맞춤 */
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: #F1F4F9;
+      color: #111827;
+      overflow: hidden; /* 진단 중 불필요한 스크롤 방지 */
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      height: 100%;
+      height: 100dvh;
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* 화면 전환 제어 */
+    .screen {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+    }
+    .screen.active {
+      display: flex;
+    }
+
+    /* ================= 1. 시작 화면 ================= */
+    #screen-intro {
+      padding: 24px 20px 20px;
+      justify-content: space-between;
+      overflow-y: auto;
+    }
+    .intro-header {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .intro-title {
+      font-size: 27px;
+      font-weight: 800;
+      color: #1454FF;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+    .intro-subtitle {
+      font-size: 16px;
+      color: #4B5563;
+      line-height: 1.5;
+      font-weight: 500;
+      word-break: keep-all;
+    }
+    .form-box {
+      margin: auto 0;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 17px;
+      font-weight: 700;
+      color: #1F2937;
+      margin-bottom: 8px;
+    }
+    .form-input {
+      width: 100%;
+      height: 52px;
+      border: 2px solid #D1D5DB;
+      border-radius: 12px;
+      padding: 0 16px;
+      font-size: 18px;
+      color: #111827;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: #1454FF;
+    }
+    .form-input::placeholder {
+      color: #9CA3AF;
+      font-size: 16px;
+    }
+
+    /* 저작권 및 문의 안내 스타일 */
+    .intro-copyright-box {
+      margin-top: 14px;
+      padding: 10px 12px;
+      background-color: #F8FAFC;
+      border-radius: 10px;
+      border: 1px solid #E2E8F0;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .intro-contact {
+      font-size: 14px;
+      color: #475569;
+      font-weight: 600;
+      word-break: keep-all;
+    }
+    .intro-contact a {
+      color: #1454FF;
+      text-decoration: underline;
+      font-weight: 700;
+    }
+    .intro-copy {
+      font-size: 12px;
+      color: #64748B;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+
+    .btn-start {
+      width: 100%;
+      height: 56px;
+      border: none;
+      border-radius: 12px;
+      font-size: 19px;
+      font-weight: 700;
+      background-color: #E5E7EB;
+      color: #9CA3AF;
+      cursor: not-allowed;
+      transition: all 0.2s;
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+    .btn-start.ready {
+      background-color: #1454FF;
+      color: #FFFFFF;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(20, 84, 255, 0.25);
+    }
+
+    /* ================= 2. 문항 진행 화면 (1화면 노스크롤) ================= */
+    #screen-quiz {
+      padding: 16px 18px 14px;
+      justify-content: space-between;
+    }
+
+    .quiz-top-area {
+      flex-shrink: 0;
+    }
+    .quiz-progress-bar-container {
+      width: 100%;
+      height: 7px;
+      background-color: #E5E7EB;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .quiz-progress-bar {
+      height: 100%;
+      width: 10%;
+      background-color: #1454FF;
+      transition: width 0.25s ease;
+    }
+    .quiz-status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .quiz-step-tag {
+      background: #EFF6FF;
+      color: #1454FF;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    .quiz-number {
+      font-size: 16px;
+      font-weight: 800;
+      color: #4B5563;
+    }
+    .question-title {
+      font-size: 19px;
+      line-height: 1.4;
+      font-weight: 800;
+      color: #111827;
+      word-break: keep-all;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    /* 1~5점 선택 버튼 목록 (1줄 통합형) */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      justify-content: center;
+    }
+    .option-btn {
+      width: 100%;
+      height: 52px;
+      border: 1.8px solid #E5E7EB;
+      border-radius: 12px;
+      background: #FFFFFF;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      text-align: left;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .option-btn:active, .option-btn.selected {
+      border-color: #1454FF;
+      background-color: #EFF6FF;
+    }
+    .opt-score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #F3F4F6;
+      color: #374151;
+      font-weight: 800;
+      font-size: 15px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .option-btn.selected .opt-score {
+      background: #1454FF;
+      color: #FFFFFF;
+    }
+    .opt-text {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1F2937;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.3px;
+    }
+
+    /* 이전 문항 버튼 */
+    .quiz-bottom-nav {
+      flex-shrink: 0;
+      padding-top: 8px;
+      display: flex;
+      align-items: center;
+    }
+    .btn-prev {
+      background: none;
+      border: none;
+      color: #6B7280;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 8px 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ================= 3. 결과 화면 ================= */
+    #screen-result {
+      padding: 20px 18px 24px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .result-header-card {
+      background: #F8FAFC;
+      border: 2px solid #E2E8F0;
+      border-radius: 18px;
+      padding: 20px 16px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .result-badge {
+      display: inline-block;
+      padding: 5px 12px;
+      background: #DBEAFE;
+      color: #1D4ED8;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .result-user-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 10px;
+    }
+    .result-score-wrap {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .result-score-val {
+      font-size: 46px;
+      font-weight: 900;
+      color: #1454FF;
+      line-height: 1;
+    }
+    .result-score-denom {
+      font-size: 18px;
+      color: #64748B;
+      font-weight: 700;
+    }
+    .result-summary-box {
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 16px;
+      line-height: 1.55;
+      color: #1F2937;
+      text-align: left;
+      word-break: keep-all;
+    }
+
+    .step-feedback-title {
+      font-size: 19px;
+      font-weight: 800;
+      color: #111827;
+      margin: 10px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-card {
+      background: #FFFFFF;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 14px;
+      padding: 15px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .step-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      border-bottom: 1px dashed #E2E8F0;
+      padding-bottom: 8px;
+    }
+    .step-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1E293B;
+    }
+    .step-score-tag {
+      font-size: 13px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .tag-high { background: #DCFCE7; color: #15803D; }
+    .tag-mid  { background: #FEF3C7; color: #B45309; }
+    .tag-low  { background: #FEE2E2; color: #B91C1C; }
+
+    .feedback-item {
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 8px;
+      word-break: keep-all;
+    }
+    .feedback-item:last-child { margin-bottom: 0; }
+    .fb-praise { color: #047857; }
+    .fb-effort { color: #4338CA; }
+
+    .btn-restart {
+      width: 100%;
+      height: 56px;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 800;
+      background: #1454FF;
+      color: #FFFFFF;
+      cursor: pointer;
+      margin-top: 14px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- 1. 첫 화면 (선생님 성함 / 연세 입력 / 저작권 및 문의처) -->
+    <section id="screen-intro" class="screen active">
+      <div class="intro-header">
+        <h1 class="intro-title">스마트폰 역량 평가서</h1>
+        <p class="intro-subtitle">
+          선생님의 스마트폰 활용 수준을 평가하고,<br>
+          유용한 사용 방법을 안내해 드립니다.
+        </p>
+      </div>
+
+      <div class="form-box">
+        <div class="form-group">
+          <label class="form-label" for="userName">선생님의 성함을 입력해 주십시오.</label>
+          <input type="text" id="userName" class="form-input" placeholder="예: 홍길동" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="userAge">연세(나이)를 입력해 주십시오.</label>
+          <input type="number" id="userAge" class="form-input" placeholder="예: 65" inputmode="numeric">
+        </div>
+
+        <!-- 저작권(더알컴퍼니(유)) 및 이메일 문의처 표시 영역 -->
+        <div class="intro-copyright-box">
+          <div class="intro-contact">
+            궁금하신 사항은 <a href="mailto:oseyo210@gmail.com">oseyo210@gmail.com</a> 으로 문의 바랍니다.
+          </div>
+          <div class="intro-copy">
+            © 2026. 더알컴퍼니(유) All rights reserved.
+          </div>
+        </div>
+      </div>
+
+      <button id="btnStart" class="btn-start" disabled>진단 시작하기 &gt;</button>
+    </section>
+
+
+    <!-- 2. 문항 화면 -->
+    <section id="screen-quiz" class="screen">
+      <div class="quiz-top-area">
+        <div class="quiz-progress-bar-container">
+          <div id="progressBar" class="quiz-progress-bar"></div>
+        </div>
+
+        <div class="quiz-status-row">
+          <span id="quizStepTag" class="quiz-step-tag">1단계: 기초 조작</span>
+          <span id="quizCounter" class="quiz-number">1 / 10</span>
+        </div>
+
+        <h2 id="quizQuestion" class="question-title">1. 걸려오는 전화를 받아 통화하고, 온 문자메시지를 열어서 읽을 수 있습니까?</h2>
+      </div>
+
+      <!-- 선택 항목 (1문장 1줄 통합형) -->
+      <div class="options-list">
+        <button class="option-btn" onclick="selectScore(5)">
+          <span class="opt-score">5</span>
+          <span class="opt-text">혼자서 막힘없이 아주 능숙하게 사용함</span>
+        </button>
+
+        <button class="option-btn" onclick="selectScore(4)">
+          <span class="opt-score">4</span>
+          <span class="opt-text">어렵지 않게 대체로 잘 사용하는 편임</span>
+        </button>
+
+        <button class="option-btn" onclick="selectScore(3)">
+          <span class="opt-score">3</span>
+          <span class="opt-text">보통이며 가끔 생각이 필요하거나 헷갈림</span>
+        </button>
+
+        <button class="option-btn" onclick="selectScore(2)">
+          <span class="opt-score">2</span>
+          <span class="opt-text">조금 서툴러서 주변의 도움이 가끔 필요함</span>
+        </button>
+
+        <button class="option-btn" onclick="selectScore(1)">
+          <span class="opt-score">1</span>
+          <span class="opt-text">전혀 다루지 못하거나 도움이 꼭 필요함</span>
+        </button>
+      </div>
+
+      <!-- 하단 이전 문항 네비게이션 -->
+      <div class="quiz-bottom-nav">
+        <button id="btnPrev" class="btn-prev" onclick="goPrevQuestion()">◀ 이전 문항</button>
+      </div>
+    </section>
+
+
+    <!-- 3. 결과 화면 -->
+    <section id="screen-result" class="screen">
+      <div class="result-header-card">
+        <span class="result-badge" id="resultGradeBadge">진단 완료</span>
+        <h2 class="result-user-title"><span id="resultName">선생님</span>의 진단 결과</h2>
+        
+        <div class="result-score-wrap">
+          <span class="result-score-val" id="resultScore">0</span>
+          <span class="result-score-denom">/ 100점</span>
+        </div>
+
+        <div class="result-summary-box" id="resultSummaryText">
+          <!-- 총평 내용 -->
+        </div>
+      </div>
+
+      <h3 class="step-feedback-title">📋 단계별 역량 분석 및 맞춤 조언</h3>
+      <div id="stepFeedbackContainer">
+        <!-- 5단계 피드백 카드 동적 생성 -->
+      </div>
+
+      <button class="btn-restart" onclick="restartQuiz()">처음부터 다시 진단하기</button>
+    </section>
+
+  </div>
+
+  <script>
+    const questions = [
+      { stepId: 1, step: "1단계: 기초 조작", q: "1. 걸려오는 전화를 받아 통화하고, 온 문자메시지를 열어서 읽을 수 있습니까?" },
+      { stepId: 1, step: "1단계: 기초 조작", q: "2. 스마트폰 화면 밝기나 벨소리 크기를 원하는 대로 조절할 수 있습니까?" },
+      { stepId: 2, step: "2단계: 소통 및 활용", q: "3. 연락처에서 가족이나 지인을 찾아 직접 전화를 걸거나 문자를 보낼 수 있습니까?" },
+      { stepId: 2, step: "2단계: 소통 및 활용", q: "4. 스마트폰 카메라로 사진을 찍고, 앨범에서 사진을 찾아 카카오톡으로 보낼 수 있습니까?" },
+      { stepId: 3, step: "3단계: 검색 및 음성 입문", q: "5. 마이크 버튼을 눌러 음성으로 '오늘 날씨'나 '일정'을 물어보고 찾을 수 있습니까?" },
+      { stepId: 3, step: "3단계: 검색 및 음성 입문", q: "6. 필요한 생활 앱(지도, 건강 앱 등)을 플레이스토어에서 직접 찾아 설치할 수 있습니까?" },
+      { stepId: 4, step: "4단계: 스마트 카메라 & 도구", q: "7. 카메라로 꽃, 사물을 비춰 이름을 찾거나(구글 렌즈) 외국어를 번역해 보셨습니까?" },
+      { stepId: 4, step: "4단계: 스마트 카메라 & 도구", q: "8. 식당, 병원, 매장에서 QR코드 인증이나 무인 키오스크를 스마트폰과 연계해 써보셨습니까?" },
+      { stepId: 5, step: "5단계: 대화형 AI 체험", q: "9. 챗GPT나 생성형 AI에게 일상 궁금증, 건강 정보, 편지 글귀 등을 질문해 보셨습니까?" },
+      { stepId: 5, step: "5단계: 대화형 AI 체험", q: "10. 인공지능(AI)이 작성해 준 답변을 읽고 일상생활이나 배움에 활용해 보셨습니까?" }
+    ];
+
+    let currentIdx = 0;
+    let userAnswers = new Array(questions.length).fill(null);
+    let teacherName = "";
+    let teacherAge = "";
+
+    const screenIntro = document.getElementById('screen-intro');
+    const screenQuiz = document.getElementById('screen-quiz');
+    const screenResult = document.getElementById('screen-result');
+
+    const nameInput = document.getElementById('userName');
+    const ageInput = document.getElementById('userAge');
+    const btnStart = document.getElementById('btnStart');
+
+    function checkValidity() {
+      if (nameInput.value.trim().length > 0 && ageInput.value.trim().length > 0) {
+        btnStart.classList.add('ready');
+        btnStart.disabled = false;
+      } else {
+        btnStart.classList.remove('ready');
+        btnStart.disabled = true;
+      }
+    }
+    nameInput.addEventListener('input', checkValidity);
+    ageInput.addEventListener('input', checkValidity);
+
+    btnStart.addEventListener('click', () => {
+      teacherName = nameInput.value.trim();
+      teacherAge = ageInput.value.trim();
+
+      screenIntro.classList.remove('active');
+      screenQuiz.classList.add('active');
+      loadQuestion(0);
+    });
+
+    function loadQuestion(idx) {
+      currentIdx = idx;
+      const data = questions[idx];
+
+      document.getElementById('quizStepTag').innerText = data.step;
+      document.getElementById('quizCounter').innerText = `${idx + 1} / ${questions.length}`;
+      document.getElementById('quizQuestion').innerText = data.q;
+      document.getElementById('progressBar').style.width = `${((idx + 1) / questions.length) * 100}%`;
+
+      document.getElementById('btnPrev').style.visibility = (idx === 0) ? 'hidden' : 'visible';
+
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach(btn => btn.classList.remove('selected'));
+
+      if (userAnswers[idx] !== null) {
+        const score = userAnswers[idx];
+        const selectedBtn = Array.from(buttons).find(b => b.querySelector('.opt-score').innerText == score);
+        if (selectedBtn) selectedBtn.classList.add('selected');
+      }
+    }
+
+    function selectScore(score) {
+      userAnswers[currentIdx] = score;
+
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach(btn => {
+        if (btn.querySelector('.opt-score').innerText == score) {
+          btn.classList.add('selected');
+        } else {
+          btn.classList.remove('selected');
+        }
+      });
+
+      if (navigator.vibrate) navigator.vibrate(25);
+
+      setTimeout(() => {
+        if (currentIdx < questions.length - 1) {
+          loadQuestion(currentIdx + 1);
+        } else {
+          showResult();
+        }
+      }, 220);
+    }
+
+    function goPrevQuestion() {
+      if (currentIdx > 0) {
+        loadQuestion(currentIdx - 1);
+      }
+    }
+
+    function showResult() {
+      screenQuiz.classList.remove('active');
+      screenResult.classList.add('active');
+      screenResult.scrollTop = 0;
+
+      const rawSum = userAnswers.reduce((acc, cur) => acc + (cur || 1), 0);
+      const totalScore = rawSum * 2;
+
+      document.getElementById('resultName').innerText = `${teacherName} 선생님(${teacherAge}세)`;
+      document.getElementById('resultScore').innerText = totalScore;
+
+      let badge = "";
+      let summary = "";
+
+      if (totalScore >= 85) {
+        badge = "🏆 스마트 AI 리더";
+        summary = `<strong>${teacherName} 선생님은 일상 스마트폰 활용뿐만 아니라 음성 및 최신 AI 기술까지 주도적으로 활용하시는 최고 수준의 디지털 역량을 갖추셨습니다.</strong><br>
+        새로운 디지털 환경에 대한 적응력과 도전 의식이 매우 뛰어나시며, 동료 분들께 사용 팁을 공유해 주셔도 손색이 없을 만큼 훌륭하십니다.`;
+      } else if (totalScore >= 65) {
+        badge = "⭐ 디지털 탐험가";
+        summary = `<strong>${teacherName} 선생님은 통화, 문자, 사진 전송 등 실생활에 꼭 필요한 핵심 기능을 능숙하게 다루고 계십니다.</strong><br>
+        기초 체력이 튼튼하시므로 음성 비서와 카메라 렌즈, 인공지능(AI)과 같은 편리한 신기능을 조금만 접목하시면 일상이 두 배로 편리해지실 단계입니다.`;
+      } else if (totalScore >= 45) {
+        badge = "🌱 스마트폰 새싹";
+        summary = `<strong>기본적인 통화와 메시지 수신 등은 가능하시지만, 새로운 앱 설치나 스마트 기능 사용 시 종종 조심스러움을 느끼시는 상태입니다.</strong><br>
+        스마트폰은 '틀려도 고장 나지 않는다'는 마음으로 편안하게 만져보시는 것이 가장 중요합니다. 차근차근 익혀가시면 금세 능숙해지실 수 있습니다.`;
+      } else {
+        badge = "🤝 기초 튼튼 입문자";
+        summary = `<strong>스마트폰 조작이 아직은 다소 낯설고 주변의 손길이 자주 필요하신 단계입니다.</strong><br>
+        누구나 처음에는 어려움을 겪습니다. 화면 글씨 조절, 안전한 전화 및 문자 소통 등 생활 밀착형 기초부터 선생님의 눈높이에 맞춰 차근차근 함께하겠습니다.`;
+      }
+
+      document.getElementById('resultGradeBadge').innerText = badge;
+      document.getElementById('resultSummaryText').innerHTML = summary;
+
+      renderStepFeedback();
+    }
+
+    function renderStepFeedback() {
+      const container = document.getElementById('stepFeedbackContainer');
+      container.innerHTML = "";
+
+      const stepsMeta = [
+        {
+          step: 1,
+          name: "1단계: 기초 기기 조작",
+          praiseHigh: "전화 수신, 문자 읽기, 화면 및 소리 제어 등 스마트폰의 기본 환경을 스스로 아주 편안하게 통제하고 계십니다.",
+          praiseLow: "기기의 기본 알림을 인지하고 소통을 시작하시려는 훌륭한 기본기를 갖추고 계십니다.",
+          effort: "상단바를 내려 밝기와 소리를 상황에 맞게 자유자재로 조절하는 연습을 해보시면 눈과 귀가 훨씬 편해집니다."
+        },
+        {
+          step: 2,
+          name: "2단계: 가족·지인 소통 및 활용",
+          praiseHigh: "연락처를 찾아 직접 발신하고 소중한 일상 사진을 카카오톡으로 나누는 활발한 소통 능력이 돋보입니다.",
+          praiseLow: "가족 및 지인들과 스마트폰으로 소통하고자 하는 적극적인 교류 의지를 가지고 계십니다.",
+          effort: "앨범에서 묶어 보내기, 사진 확대 및 간단한 사진 편집 기능을 익히시면 가족과의 대화가 더욱 즐거워집니다."
+        },
+        {
+          step: 3,
+          name: "3단계: 음성 검색 및 생활 앱",
+          praiseHigh: "자판을 치지 않고도 마이크 음성으로 필요한 정보를 척척 찾아내고 앱을 설치하는 실용성이 매우 우수합니다.",
+          praiseLow: "음성 기능과 플레이스토어라는 유용한 도구의 존재를 이해하고 계십니다.",
+          effort: "작은 자판을 치는 대신 마이크 버튼을 눌러 '오늘 서울 날씨 알려줘'처럼 말로 질문하는 습관을 들이시면 손목 피로가 크게 줄어듭니다."
+        },
+        {
+          step: 4,
+          name: "4단계: 스마트 카메라 & 생활 도구",
+          praiseHigh: "카메라 렌즈로 꽃 이름을 찾거나 글자를 번역하고 무인 키오스크를 두려움 없이 활용하는 현대적 감각을 지니셨습니다.",
+          praiseLow: "외출 시 만나는 디지털 도구(QR, 키오스크)에 관심을 갖고 시도해 보려는 도전 정신이 훌륭합니다.",
+          effort: "길거리 간판이나 식물에 카메라를 비추는 '구글 렌즈' 기능을 외출 시 한 번씩 꼭 사용해 보세요."
+        },
+        {
+          step: 5,
+          name: "5단계: 대화형 AI(인공지능) 활용",
+          praiseHigh: "최신 생성형 AI에게 직접 질문하고 지혜로운 답변을 얻어내어 생활에 접목하는 선도적인 안목을 보여주셨습니다.",
+          praiseLow: "인공지능이라는 미래 기술에 열린 마음을 갖고 배움을 이어가시는 열정이 매우 멋지십니다.",
+          effort: "친구에게 말을 건네듯 AI에게 '오늘 저녁 건강 식단 추천해줘', '감사 편지 써줘'처럼 가볍게 질문해 보는 연습을 추천합니다."
+        }
+      ];
+
+      stepsMeta.forEach((item, idx) => {
+        const q1Score = userAnswers[idx * 2] || 1;
+        const q2Score = userAnswers[idx * 2 + 1] || 1;
+        const stepTotal = q1Score + q2Score;
+
+        let tagClass = "tag-mid";
+        let tagText = `보통 (${stepTotal}/10점)`;
+        let praiseText = item.praiseLow;
+
+        if (stepTotal >= 8) {
+          tagClass = "tag-high";
+          tagText = `우수 (${stepTotal}/10점)`;
+          praiseText = item.praiseHigh;
+        } else if (stepTotal <= 4) {
+          tagClass = "tag-low";
+          tagText = `집중 연습 필요 (${stepTotal}/10점)`;
+          praiseText = item.praiseLow;
+        }
+
+        const card = document.createElement('div');
+        card.className = "step-card";
+        card.innerHTML = `
+          <div class="step-card-header">
+            <span class="step-name">${item.name}</span>
+            <span class="step-score-tag ${tagClass}">${tagText}</span>
+          </div>
+          <div class="feedback-item">
+            <strong class="fb-praise">👏 칭찬할 점:</strong> ${praiseText}
+          </div>
+          <div class="feedback-item">
+            <strong class="fb-effort">💡 노력해야 할 점:</strong> ${item.effort}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function restartQuiz() {
+      userAnswers = new Array(questions.length).fill(null);
+      nameInput.value = "";
+      ageInput.value = "";
+      checkValidity();
+
+      screenResult.classList.remove('active');
+      screenIntro.classList.add('active');
+      window.scrollTo(0, 0);
+    }
+  </script>
+</body>
+</html>
